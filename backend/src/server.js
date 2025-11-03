@@ -8,9 +8,13 @@ import cors from "cors";
 import farmersRoutes from "./routes/farmers.js";
 import intakeRoutes from "./routes/intake.js";
 import gradingRoutes from "./routes/grading.js";
-import "./config/passport.js"; // load passport config
+import PaymentsRoutes from "./routes/payments.js";
+import "./config/passport.js"; 
+import { createPaymentTable } from "./models/payment.js";
+
 
 connectDB();
+createPaymentTable();
 
 const app = express();
 app.use(cors({ origin: "http://localhost:3000", credentials: true }));
@@ -32,6 +36,7 @@ app.use(passport.session());
 app.use("/api/farmers", farmersRoutes);
 app.use("/api/intake", intakeRoutes);
 app.use("/api/grading", gradingRoutes);
+app.use('/api/payments', PaymentsRoutes);
 
 // Routes
 app.use("/api/auth", authRoutes);
