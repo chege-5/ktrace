@@ -1,79 +1,99 @@
-// src/pages/admin/Inventory.jsx
-import React, { useState } from "react";
-import { motion } from "framer-motion";
+import React, { useEffect, useState } from "react";
+import { AdminAPI } from "../../utils/auth";
+import { useToast } from "../../hooks/use-toast";
 
-const sampleLots = [
-  {
-    lotId: "LOT-20251004-01",
-    farmer: "John Mwangi",
-    weightKg: 400,
-    location: "Wetmill A",
-    status: "Pending",
-    dateReceived: "2025-10-04",
-  },
-  {
-    lotId: "LOT-20251004-02",
-    farmer: "Jane Achieng",
-    weightKg: 350,
-    location: "Drymill B",
-    status: "Processed",
-    dateReceived: "2025-10-05",
-  },
-  {
-    lotId: "LOT-20251004-03",
-    farmer: "Peter Otieno",
-    weightKg: 500,
-    location: "Export",
-    status: "Shipped",
-    dateReceived: "2025-10-06",
-  },
-];
+function Inventory() {
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [filter, setFilter] = useState("pending");
+  const [actionId, setActionId] = useState(null);
+  const { toast } = useToast();
 
-export default function Inventory() {
-  const [selectedLot, setSelectedLot] = useState(null);
+  const fetchItems = async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const { data } = await AdminAPI.catalog.list({ status: filter });
+      setItems(Array.isArray(data) ? data : data?.catalog || []);
+    } catch (e) {
+      setError(e?.response?.data?.message || e.message || "Failed to load inventory");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { fetchItems(); }, [filter]);
+
+  const approve = async (id) => {
+    setActionId(id);
+    try { await AdminAPI.catalog.approve(id); await fetchItems(); toast({ title: "Inventory approved" }); }
+    catch (e) { toast({ title: "Approve failed", description: e?.response?.data?.message || e.message, variant: "destructive" }); }
+    finally { setActionId(null); }
+  };
+  const reject = async (id) => {
+    setActionId(id);
+    try { await AdminAPI.catalog.reject(id); await fetchItems(); toast({ title: "Inventory rejected" }); }
+    catch (e) { toast({ title: "Reject failed", description: e?.response?.data?.message || e.message, variant: "destructive" }); }
+    finally { setActionId(null); }
+  };
 
   return (
-    <div className="p-6 min-h-screen bg-gradient-to-br from-green-50 via-green-100 to-white space-y-6">
-      <h2 className="text-3xl font-bold text-green-900">Inventory</h2>
-
-      {/* Lots Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5">
-        {sampleLots.map((lot) => (
-          <motion.div
-            key={lot.lotId}
-            whileHover={{ scale: 1.03 }}
-            className="bg-white/90 backdrop-blur-lg p-5 rounded-2xl shadow-lg hover:shadow-xl cursor-pointer transition"
-            onClick={() => setSelectedLot(lot)}
-          >
-            <p className="font-semibold text-lg text-green-900">{lot.lotId}</p>
-            <p className="text-green-700">Farmer: {lot.farmer}</p>
-            <p className="text-green-600">Weight: {lot.weightKg} kg</p>
-            <p className="text-green-500">Location: {lot.location}</p>
-            <p className={`mt-1 font-semibold ${lot.status === "Shipped" ? "text-blue-600" : lot.status === "Processed" ? "text-green-700" : "text-amber-500"}`}>
-              {lot.status}
-            </p>
-          </motion.div>
-        ))}
+    <div className="p-4">
+      <div className="flex items-center justify-between mb-4">
+        <h1 className="text-xl font-semibold">Inventory Approvals</h1>
+        <select className="border p-2 rounded" value={filter} onChange={(e)=>setFilter(e.target.value)}>
+          <option value="pending">pending</option>
+          <option value="approved">approved</option>
+          <option value="rejected">rejected</option>
+          <option value="withdrawn">withdrawn</option>
+        </select>
       </div>
-
-      {/* Selected Lot Details */}
-      {selectedLot && (
-        <div className="mt-6 p-6 bg-white/90 backdrop-blur-lg rounded-2xl shadow-lg">
-          <h3 className="text-2xl font-bold text-green-800 mb-4">{selectedLot.lotId}</h3>
-          <p className="text-green-700 mb-2">Farmer: {selectedLot.farmer}</p>
-          <p className="text-green-700 mb-2">Weight: {selectedLot.weightKg} kg</p>
-          <p className="text-green-700 mb-2">Location: {selectedLot.location}</p>
-          <p className="text-green-700 mb-2">Status: {selectedLot.status}</p>
-          <p className="text-green-600 mb-4">Received On: {selectedLot.dateReceived}</p>
-
-          <button
-            className="mt-4 bg-green-700 text-white px-6 py-3 rounded-xl font-semibold hover:bg-green-800 transition"
-            onClick={() => setSelectedLot(null)}
-          >
-            Close Details
-          </button>
+      {loading ? (
+        <div className="flex items-center gap-2"><span className="animate-spin h-5 w-5 border-2 border-gray-300 border-t-transparent rounded-full"></span> Loading...</div>
+      ) : error ? (
+        <div className="text-red-600">{error}</div>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="min-w-full border">
+            <thead>
+              <tr className="bg-gray-100">
+                <th className="p-2 border">ID</th>
+                <th className="p-2 border">Lot</th>
+                <th className="p-2 border">Title</th>
+                <th className="p-2 border">Price/kg</th>
+                <th className="p-2 border">Status</th>
+                <th className="p-2 border">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {items.map((it) => (
+                <tr key={it.id || it._id}>
+                  <td className="p-2 border">{it.id || it._id}</td>
+                  <td className="p-2 border">{it.delivery || it.lotId || "-"}</td>
+                  <td className="p-2 border">{it.title || it.name}</td>
+                  <td className="p-2 border">{it.pricePerKg || it.price}</td>
+                  <td className="p-2 border">{it.status}</td>
+                  <td className="p-2 border space-x-2">
+                    <button
+                      className="px-3 py-1 bg-green-600 text-white rounded disabled:opacity-50"
+                      disabled={actionId === (it.id || it._id)}
+                      onClick={() => approve(it.id || it._id)}
+                    >Approve</button>
+                    <button
+                      className="px-3 py-1 bg-red-600 text-white rounded disabled:opacity-50"
+                      disabled={actionId === (it.id || it._id)}
+                      onClick={() => reject(it.id || it._id)}
+                    >Reject</button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
     </div>
   );
 }
+
+export default Inventory;

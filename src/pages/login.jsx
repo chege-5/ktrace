@@ -51,26 +51,31 @@ export default function Login() {
       }
 
       setSuccess(`Welcome back, ${user.username}!`);
+      // persist user for role guards
+      try {
+        const storage = formData.rememberMe ? localStorage : sessionStorage;
+        storage.setItem("user", JSON.stringify(user));
+      } catch {}
 
       setTimeout(() => {
         switch (user.role) {
           case "farmer":
-            navigate("/farmer/dashboard");
+            navigate("/dashboard/farmer");
             break;
           case "buyer":
             navigate("/buyer/dashboard");
             break;
           case "wetmill":
-            navigate("/wetmill/dashboard");
+            navigate("/wetmill/Dashboard");
             break;
           case "drymill":
             navigate("/drymill/dashboard");
             break;
           case "admin":
-            navigate("/admin/dashboard");
+            navigate("/dashboard/admin");
             break;
           default:
-            navigate("/dashboard");
+            navigate("/");
         }
       }, 1500);
     } catch (err) {

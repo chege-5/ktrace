@@ -57,6 +57,7 @@ import IntakeEntry from "./pages/wetmill/DataEntry";
 import HomeLayout from "./layouts/HomeLayout";
 import FarmerLayout from "./layouts/FarmerLayout";
 import AdminLayout from "./layouts/AdminLayout";
+import AdminRoute from "./components/AdminRoute";
 import BuyerLayout from "./layouts/BuyerLayout";
 import WetmillLayout from "./layouts/WetmillLayout";
 
@@ -207,11 +208,11 @@ function App() {
         <Route
           path="/dashboard/admin"
           element={
-            <ProtectedRoute>
+            <AdminRoute>
               <AdminLayout>
                 <AdminDashboard />
               </AdminLayout>
-            </ProtectedRoute>
+            </AdminRoute>
           }
         />
 

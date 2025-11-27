@@ -9,6 +9,12 @@ import farmersRoutes from "./routes/farmers.js";
 import intakeRoutes from "./routes/intake.js";
 import gradingRoutes from "./routes/grading.js";
 import PaymentsRoutes from "./routes/payments.js";
+import buyersRoutes from "./routes/buyers.js";
+import drymillsRoutes from "./routes/drymills.js";
+import wetmillsRoutes from "./routes/wetmills.js";
+import roastersRoutes from "./routes/roasters.js";
+import catalogRoutes from "./routes/catalog.js";
+import adminRoutes from "./routes/admin.js";
 import "./config/passport.js"; 
 import { createPaymentTable } from "./models/payment.js";
 
@@ -37,6 +43,12 @@ app.use("/api/farmers", farmersRoutes);
 app.use("/api/intake", intakeRoutes);
 app.use("/api/grading", gradingRoutes);
 app.use('/api/payments', PaymentsRoutes);
+app.use('/api/buyers', buyersRoutes);
+app.use('/api/drymills', drymillsRoutes);
+app.use('/api/wetmills', wetmillsRoutes);
+app.use('/api/roasters', roastersRoutes);
+app.use('/api/catalog', catalogRoutes);
+app.use('/api/admin', adminRoutes);
 
 // Routes
 app.use("/api/auth", authRoutes);
